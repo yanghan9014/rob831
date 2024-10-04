@@ -54,6 +54,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--expert_policy_file', '-epf', type=str, required=True)  # relative to where you're running this script from
     parser.add_argument('--expert_data', '-ed', type=str, required=True) #relative to where you're running this script from
+    parser.add_argument('--expert_data_usage', type=float, default=1.0)
+
     parser.add_argument('--env_name', '-env', type=str, help='choices: Ant-v2, Humanoid-v2, Walker-v2, HalfCheetah-v2, Hopper-v2', required=True)
     parser.add_argument('--exp_name', '-exp', type=str, default='pick an experiment name', required=True)
     parser.add_argument('--do_dagger', action='store_true')
@@ -105,7 +107,7 @@ def main():
     if not(os.path.exists(logdir)):
         os.makedirs(logdir)
 
-
+    
     ###################
     ### RUN TRAINING
     ###################

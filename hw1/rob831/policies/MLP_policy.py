@@ -11,7 +11,7 @@ from torch import distributions
 
 from rob831.infrastructure import pytorch_util as ptu
 from rob831.policies.base_policy import BasePolicy
-
+import pdb
 
 class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
 
@@ -75,13 +75,22 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
     ##################################
 
     def get_action(self, obs: np.ndarray) -> np.ndarray:
+        # TODO return the action that the policy prescribes
         if len(obs.shape) > 1:
             observation = obs
         else:
             observation = obs[None]
-
-        # TODO return the action that the policy prescribes
-        raise NotImplementedError
+        observation = torch.Tensor(observation).to(ptu.device)
+        if self.discrete:
+            action_logits = self.logits_na(observation)
+            probs = torch.softmax(action_logits, dim=-1)
+            dist = distributions.Categorical(probs)
+            action = dist.sample()
+        else:
+            std = torch.exp(self.logstd)  # Exponentiate logstd to get std
+            dist = torch.distributions.Normal(self.mean_net(observation), std)
+            action = dist.sample()
+        return action.cpu().numpy()
 
     # update/train this policy
     def update(self, observations, actions, **kwargs):
@@ -93,7 +102,16 @@ class MLPPolicy(BasePolicy, nn.Module, metaclass=abc.ABCMeta):
     # return more flexible objects, such as a
     # `torch.distributions.Distribution` object. It's up to you!
     def forward(self, observation: torch.FloatTensor) -> Any:
-        raise NotImplementedError
+        if self.discrete:
+            action_logits = self.logits_na(observation)
+            probs = torch.softmax(action_logits, dim=-1)
+            dist = distributions.Categorical(probs)
+            action = dist.sample()
+        else:
+            std = torch.exp(self.logstd)  # Exponentiate logstd to get std
+            dist = torch.distributions.Normal(self.mean_net(observation), std)
+            action = dist.sample()
+        return action
 
 
 #####################################################
@@ -108,8 +126,21 @@ class MLPPolicySL(MLPPolicy):
             self, observations, actions,
             adv_n=None, acs_labels_na=None, qvals=None
     ):
+        ob_tensor = torch.tensor(observations).to(ptu.device)
+        ac_tensor = torch.tensor(actions).to(ptu.device)
         # TODO: update the policy and return the loss
-        loss = TODO
+        if self.discrete:
+            pred_action = self.logits_na(ob_tensor)
+            # pred_action = torch.exp(pred_action)
+        else:
+            mean = self.mean_net(ob_tensor)
+            std = torch.exp(self.logstd) 
+            dist = torch.distributions.Normal(mean, std)
+            pred_action = dist.rsample()
+        loss = self.loss(pred_action, ac_tensor)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
         return {
             # You can add extra logging information here, but keep this line
