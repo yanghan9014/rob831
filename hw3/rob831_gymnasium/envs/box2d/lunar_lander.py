@@ -4,9 +4,13 @@ import numpy as np
 import Box2D
 from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
 
-import gym
-from gym import spaces
-from gym.utils import seeding
+# import gym
+# from gym import spaces
+# from gym.utils import seeding
+
+import gymnasium as gym
+from gymnasium import spaces
+from gymnasium.utils import seeding
 
 import pyglet
 
@@ -362,7 +366,7 @@ class LunarLander(gym.Env):
             self.lander.color1 = (255,0,0)
         info = {}
 
-        return np.array(state), reward, done, info
+        return np.array(state), reward, done, 0, info
 
     def _render(self, mode='rgb_array', close=False):
         if close:
@@ -415,7 +419,9 @@ class LunarLander(gym.Env):
 
         return self.viewer.render(return_rgb_array = mode=='rgb_array')
 
-    def reset(self):
+    def reset(self, seed=None, options=None):
+        if seed is not None:
+            super.reset(seed=seed)
         return self._reset()
 
     def step(self, *args, **kwargs):

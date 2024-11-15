@@ -68,7 +68,7 @@ class DQNAgent(object):
         # HINT1: remember that self.last_obs must always point to the newest/latest observation
         # HINT2: remember the following useful function that you've seen before:
             #obs, reward, done, info = env.step(action)
-        observation, reward, done, truncated = self.env.step(action)
+        observation, reward, done, _ = self.env.step(action)
         self.last_obs = observation
 
         # TODO store the result of taking this action into the replay buffer
